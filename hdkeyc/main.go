@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strconv"
 
 	chaincfg "github.com/btcsuite/btcd/chaincfg"
@@ -15,14 +16,36 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Usage = "A command line utility for manipulating HD wallet keys"
+	app.Version = "0.0.1"
 	app.Commands = []cli.Command{
 		privKeyCmd,
 		pubKeyCmd,
+		genKeyCmd,
 	}
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+var genKeyCmd = cli.Command{
+	Name:            "gen",
+	Usage:           "generate an HD wallet key",
+	SkipFlagParsing: true,
+	Action: func(c *cli.Context) error {
+		f, err := exec.LookPath("hdkeygen")
+		if err != nil {
+			return fmt.Errorf("could not find 'hdkeygen' binary: %s", err)
+		}
+
+		cmd := exec.Command(f, c.Args()...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+
+		return cmd.Run()
+	},
 }
 
 var privKeyCmd = cli.Command{
