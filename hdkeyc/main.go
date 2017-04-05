@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,9 +10,11 @@ import (
 
 	chaincfg "github.com/btcsuite/btcd/chaincfg"
 	btcutil "github.com/btcsuite/btcutil"
+	b58 "github.com/btcsuite/btcutil/base58"
 	keychain "github.com/btcsuite/btcutil/hdkeychain"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	cli "github.com/urfave/cli"
+	"golang.org/x/crypto/ripemd160"
 )
 
 func main() {
@@ -214,7 +217,17 @@ var getChildPubKeyCmd = cli.Command{
 		case "btc":
 			fmt.Println(addr.EncodeAddress())
 		case "zec":
-			fmt.Println("t" + addr.EncodeAddress())
+			ecpk, err := childpub.ECPubKey()
+			if err != nil {
+				return err
+			}
+			uncomp := ecpk.SerializeUncompressed()
+			shad := sha256.Sum256(uncomp)
+			h := ripemd160.New()
+			h.Write(shad[:])
+			ripemd := h.Sum(nil)
+			d := append([]byte{0x1c, 0xb8}, ripemd...)
+			fmt.Println(b58.CheckEncode(d, 0))
 		case "eth":
 			ecpubkey, err := childpub.ECPubKey()
 			if err != nil {
