@@ -167,6 +167,24 @@ var pubKeyCmd = cli.Command{
 	},
 }
 
+func hashKey(k *keychain.ExtendedKey) ([]byte, error) {
+	ecpk, err := k.ECPubKey()
+	if err != nil {
+		return nil, err
+	}
+	uncomp := ecpk.SerializeUncompressed()
+	shad := sha256.Sum256(uncomp)
+	h := ripemd160.New()
+	h.Write(shad[:])
+	return h.Sum(nil), nil
+}
+
+func base58checkEncode(val []byte) string {
+	first := sha256.Sum256(val)
+	chk := sha256.Sum256(first[:])
+	return b58.Encode(append(val, chk[:4]...))
+}
+
 var getChildPubKeyCmd = cli.Command{
 	Name:  "child",
 	Usage: "derive a child public key",
@@ -208,26 +226,19 @@ var getChildPubKeyCmd = cli.Command{
 			return err
 		}
 
-		addr, err := childpub.Address(&chaincfg.MainNetParams)
-		if err != nil {
-			return err
-		}
-
 		switch enc {
 		case "btc":
-			fmt.Println(b58.CheckEncode(addr.Hash160()[:], 0))
-		case "zec":
-			ecpk, err := childpub.ECPubKey()
+			ripeh, err := hashKey(childpub)
 			if err != nil {
 				return err
 			}
-			uncomp := ecpk.SerializeUncompressed()
-			shad := sha256.Sum256(uncomp)
-			h := ripemd160.New()
-			h.Write(shad[:])
-			ripemd := h.Sum(nil)
-			d := append([]byte{0x1c, 0xb8}, ripemd...)
-			fmt.Println(b58.CheckEncode(d, 0))
+			fmt.Println(base58checkEncode(append([]byte{0}, ripeh...)))
+		case "zec":
+			ripeh, err := hashKey(childpub)
+			if err != nil {
+				return err
+			}
+			fmt.Println(base58checkEncode(append([]byte{0x1c, 0xb8}, ripeh...)))
 		case "eth":
 			ecpubkey, err := childpub.ECPubKey()
 			if err != nil {
