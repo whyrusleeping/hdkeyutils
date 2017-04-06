@@ -215,7 +215,7 @@ var getChildPubKeyCmd = cli.Command{
 
 		switch enc {
 		case "btc":
-			fmt.Println(addr.EncodeAddress())
+			fmt.Println(b58.CheckEncode(addr.Hash160()[:], 0))
 		case "zec":
 			ecpk, err := childpub.ECPubKey()
 			if err != nil {
