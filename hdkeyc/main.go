@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,11 +9,9 @@ import (
 
 	chaincfg "github.com/btcsuite/btcd/chaincfg"
 	btcutil "github.com/btcsuite/btcutil"
-	b58 "github.com/btcsuite/btcutil/base58"
 	keychain "github.com/btcsuite/btcutil/hdkeychain"
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	cli "github.com/urfave/cli"
-	"golang.org/x/crypto/ripemd160"
+	addrs "github.com/whyrusleeping/hdkeyutils/addrs"
 )
 
 func main() {
@@ -167,24 +164,6 @@ var pubKeyCmd = cli.Command{
 	},
 }
 
-func hashKey(k *keychain.ExtendedKey) ([]byte, error) {
-	ecpk, err := k.ECPubKey()
-	if err != nil {
-		return nil, err
-	}
-	uncomp := ecpk.SerializeUncompressed()
-	shad := sha256.Sum256(uncomp)
-	h := ripemd160.New()
-	h.Write(shad[:])
-	return h.Sum(nil), nil
-}
-
-func base58checkEncode(val []byte) string {
-	first := sha256.Sum256(val)
-	chk := sha256.Sum256(first[:])
-	return b58.Encode(append(val, chk[:4]...))
-}
-
 var getChildPubKeyCmd = cli.Command{
 	Name:  "child",
 	Usage: "derive a child public key",
@@ -226,27 +205,18 @@ var getChildPubKeyCmd = cli.Command{
 			return err
 		}
 
+		ecpub, err := childpub.ECPubKey()
+		if err != nil {
+			return err
+		}
+
 		switch enc {
 		case "btc":
-			ripeh, err := hashKey(childpub)
-			if err != nil {
-				return err
-			}
-			fmt.Println(base58checkEncode(append([]byte{0}, ripeh...)))
+			fmt.Println(addrs.EncodeBitcoinPubkey(ecpub))
 		case "zec":
-			ripeh, err := hashKey(childpub)
-			if err != nil {
-				return err
-			}
-			fmt.Println(base58checkEncode(append([]byte{0x1c, 0xb8}, ripeh...)))
+			fmt.Println(addrs.EncodeZcashPubkey(ecpub))
 		case "eth":
-			ecpubkey, err := childpub.ECPubKey()
-			if err != nil {
-				return err
-			}
-
-			addr := ethcrypto.PubkeyToAddress(*ecpubkey.ToECDSA())
-			fmt.Println(addr.Hex())
+			fmt.Println(addrs.EncodeEthereumPubkey(ecpub))
 		default:
 			return fmt.Errorf("unrecognized output format: %s", enc)
 		}
