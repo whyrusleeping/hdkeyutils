@@ -26,3 +26,7 @@ go get -u github.com/whyrusleeping/hdkeyutils/hdkeyc
 ```
 go get -u github.com/whyrusleeping/hdkeyutils/...
 ```
+
+## Usage 
+
+Usage instructions can be found in the READMEs for each tool.
