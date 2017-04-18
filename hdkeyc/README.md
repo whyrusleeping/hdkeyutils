@@ -29,3 +29,43 @@ GLOBAL OPTIONS:
    --version, -v  print the version
 ```
 
+## Importing Keys
+
+### Bitcoin
+
+To import a private key:
+```
+$ hdkeyc priv child mymasterpriv.key 101 > key101.wif
+$ bitcoin-cli importprivkey `cat key101.wif` false
+```
+
+To get a public key:
+```
+hdkeyc pub child mymasterpub.key 101
+```
+
+### Zcash
+
+To import a private key:
+```
+$ hdkeyc priv child mymaster.key 101 > key101.wif
+$ zcash-cli importprivkey `cat key101.wif` false
+```
+
+To get a public key:
+```
+hdkeyc pub child mymasterpub.key 101 --format=zec
+```
+
+### Ethereum
+
+To import a private key:
+```
+$ hdkeyc priv child mymaster.key 101 --format=eth > key101.eth
+$ geth import key101.eth 
+```
+
+To get a public key:
+```
+hdkeyc pub child mymasterpub.key 101 --format=eth
+```

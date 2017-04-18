@@ -24,14 +24,20 @@ func Base58Check(val, prefix []byte) string {
 	return b58.Encode(append(val, chk[:4]...))
 }
 
+var BitcoinPrefix = []byte{0}
+var BitcoinTestnetPrefix = []byte{0x6f}
+
 func EncodeBitcoinPubkey(k *btcec.PublicKey) string {
 	val := KeyHashSha256Ripe160(k)
-	return Base58Check(val, []byte{0})
+	return Base58Check(val, BitcoinPrefix)
 }
+
+var ZcashPrefix = []byte{0x1c, 0xb8}
+var ZcashTestnetPrefix = []byte{0x1d, 0x25}
 
 func EncodeZcashPubkey(k *btcec.PublicKey) string {
 	val := KeyHashSha256Ripe160(k)
-	return Base58Check(val, []byte{0x1c, 0xb8})
+	return Base58Check(val, ZcashPrefix)
 }
 
 func EncodeEthereumPubkey(k *btcec.PublicKey) string {
