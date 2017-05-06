@@ -104,6 +104,9 @@ var getChildPrivKeyCmd = cli.Command{
 			Usage: "output format for key (wif or eth)",
 			Value: "wif",
 		},
+		cli.BoolFlag{
+			Name: "testnet",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		format := c.String("format")
@@ -143,7 +146,11 @@ var getChildPrivKeyCmd = cli.Command{
 
 		switch format {
 		case "wif":
-			wif, err := btcutil.NewWIF(privk, &chaincfg.MainNetParams, false)
+			params := &chaincfg.MainNetParams
+			if c.Bool("testnet") {
+				params = &chaincfg.TestNet3Params
+			}
+			wif, err := btcutil.NewWIF(privk, params, false)
 			if err != nil {
 				return err
 			}
@@ -172,6 +179,10 @@ var getChildPubKeyCmd = cli.Command{
 			Name:  "format",
 			Usage: "output format for key (btc, zec, or eth)",
 			Value: "btc",
+		},
+		cli.BoolFlag{
+			Name:  "testnet",
+			Usage: "print testnet addrs",
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -208,6 +219,11 @@ var getChildPubKeyCmd = cli.Command{
 		ecpub, err := childpub.ECPubKey()
 		if err != nil {
 			return err
+		}
+
+		if c.Bool("testnet") {
+			addrs.BitcoinPrefix = addrs.BitcoinTestnetPrefix
+			addrs.ZcashPrefix = addrs.ZcashTestnetPrefix
 		}
 
 		switch enc {
