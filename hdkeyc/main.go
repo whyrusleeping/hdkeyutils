@@ -150,7 +150,7 @@ var getChildPrivKeyCmd = cli.Command{
 			if c.Bool("testnet") {
 				params = &chaincfg.TestNet3Params
 			}
-			wif, err := btcutil.NewWIF(privk, params, false)
+			wif, err := btcutil.NewWIF(privk, params, true)
 			if err != nil {
 				return err
 			}

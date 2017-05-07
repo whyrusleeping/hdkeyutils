@@ -2,6 +2,7 @@ package addrs
 
 import (
 	"crypto/sha256"
+	"fmt"
 
 	btcec "github.com/btcsuite/btcd/btcec"
 	b58 "github.com/btcsuite/btcutil/base58"
@@ -10,7 +11,7 @@ import (
 )
 
 func KeyHashSha256Ripe160(ecpk *btcec.PublicKey) []byte {
-	uncomp := ecpk.SerializeUncompressed()
+	uncomp := ecpk.SerializeCompressed()
 	shad := sha256.Sum256(uncomp)
 	h := ripemd160.New()
 	h.Write(shad[:])
@@ -43,4 +44,16 @@ func EncodeZcashPubkey(k *btcec.PublicKey) string {
 func EncodeEthereumPubkey(k *btcec.PublicKey) string {
 	addr := ethcrypto.PubkeyToAddress(*k.ToECDSA())
 	return addr.Hex()
+}
+
+func DecodeZcashAddr(addr string) ([]byte, error) {
+	data := b58.Decode(addr)
+	if len(data) == 0 {
+		return nil, fmt.Errorf("invalid base58")
+	}
+
+	if len(data) < 6 {
+		return nil, fmt.Errorf("invalid zcash address")
+	}
+	return data[2 : len(data)-4], nil
 }
