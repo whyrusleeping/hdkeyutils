@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha512"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
@@ -28,6 +29,7 @@ func main() {
 	randsrc := flag.String("randsrc", "", "filename of alternative randomness source")
 	randbytes := flag.Int("randlen", 8192, "number of bytes of randomness to read from randomness source")
 	output := flag.String("output", "output.key", "name of keyfile to output")
+	seedhex := flag.String("seedhex", "", "optionally specify entire seed data in hex")
 	flag.Parse()
 
 	var r io.Reader = rand.Reader
@@ -45,31 +47,43 @@ func main() {
 
 	fmt.Println("Starting Less Insecure Key Generator...")
 
-	// Read data from users keyboard
-	fmt.Println("Please enter some randomness, press Ctrl+d when youre done")
-	userRandom := new(bytes.Buffer)
-	io.Copy(userRandom, os.Stdin)
+	var seed []byte
+	shx := *seedhex
+	if len(shx) > 0 {
+		sdata, err := hex.DecodeString(shx)
+		if err != nil {
+			fatal("failed to decode seedhex: %s", err)
+		}
 
-	fmt.Printf("Read %d bytes of random data from the keyboard\n", userRandom.Len())
+		seed = sdata
+		fmt.Printf("Using seed data of \"%x\"\n", seed)
+	} else {
+		// Read data from users keyboard
+		fmt.Println("Please enter some randomness, press Ctrl+d when youre done")
+		userRandom := new(bytes.Buffer)
+		io.Copy(userRandom, os.Stdin)
 
-	// Now get some randomness from either crypto/rand, or whatever the user
-	// wants to use instead
-	fmt.Printf("Now reading %d bytes of random data from cryptographic randomness source\n", *randbytes)
-	otherRand := make([]byte, *randbytes)
-	_, err := io.ReadFull(r, otherRand)
-	if err != nil {
-		fatal("Error while reading randomness: %s\n", err)
+		fmt.Printf("Read %d bytes of random data from the keyboard\n", userRandom.Len())
+
+		// Now get some randomness from either crypto/rand, or whatever the user
+		// wants to use instead
+		fmt.Printf("Now reading %d bytes of random data from cryptographic randomness source\n", *randbytes)
+		otherRand := make([]byte, *randbytes)
+		_, err := io.ReadFull(r, otherRand)
+		if err != nil {
+			fatal("Error while reading randomness: %s\n", err)
+		}
+		r.Read(otherRand)
+
+		// Hash first the otherRand data then the users input
+		h := sha512.New()
+		h.Write(otherRand)
+		h.Write(userRandom.Bytes())
+		seed = h.Sum(nil)
+
+		// TODO: maybe don't print this? its basically the private key
+		fmt.Printf("Generated master key seed from randomness:\n%x\n", seed)
 	}
-	r.Read(otherRand)
-
-	// Hash first the otherRand data then the users input
-	h := sha512.New()
-	h.Write(otherRand)
-	h.Write(userRandom.Bytes())
-	seed := h.Sum(nil)
-
-	// TODO: maybe don't print this? its basically the private key
-	fmt.Printf("Generated master key seed from randomness:\n%x\n", seed)
 
 	// Create the private key from the seed we generated
 	fmt.Println("Now creating master private key...")
