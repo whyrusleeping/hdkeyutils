@@ -11,8 +11,11 @@ import (
 )
 
 func KeyHashSha256Ripe160(ecpk *btcec.PublicKey) []byte {
-	uncomp := ecpk.SerializeCompressed()
-	shad := sha256.Sum256(uncomp)
+	return HashSha256Ripe160(ecpk.SerializeCompressed())
+}
+
+func HashSha256Ripe160(data []byte) []byte {
+	shad := sha256.Sum256(data)
 	h := ripemd160.New()
 	h.Write(shad[:])
 	return h.Sum(nil)
@@ -26,7 +29,9 @@ func Base58Check(val, prefix []byte) string {
 }
 
 var BitcoinPrefix = []byte{0}
+var BitcoinP2SHPrefix = []byte{5}
 var BitcoinTestnetPrefix = []byte{0x6f}
+var BitcoinTestnetP2SHPrefix = []byte{0xc4}
 
 func EncodeBitcoinPubkey(k *btcec.PublicKey) string {
 	val := KeyHashSha256Ripe160(k)
@@ -34,7 +39,9 @@ func EncodeBitcoinPubkey(k *btcec.PublicKey) string {
 }
 
 var ZcashPrefix = []byte{0x1c, 0xb8}
+var ZcashP2SHPrefix = []byte{0x1c, 0xbd}
 var ZcashTestnetPrefix = []byte{0x1d, 0x25}
+var ZcashTestnetP2SHPrefix = []byte{0x1c, 0xba}
 
 func EncodeZcashPubkey(k *btcec.PublicKey) string {
 	val := KeyHashSha256Ripe160(k)

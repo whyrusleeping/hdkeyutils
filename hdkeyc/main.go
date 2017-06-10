@@ -22,6 +22,7 @@ func main() {
 		privKeyCmd,
 		pubKeyCmd,
 		genKeyCmd,
+		msigCmd,
 	}
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -65,18 +66,9 @@ var getMasterPubCmd = cli.Command{
 			return fmt.Errorf("must pass in private key file")
 		}
 
-		data, err := ioutil.ReadFile(c.Args().First())
+		key, err := loadPrivKey(c.Args().First())
 		if err != nil {
 			return err
-		}
-
-		key, err := keychain.NewKeyFromString(string(data))
-		if err != nil {
-			return err
-		}
-
-		if !key.IsPrivate() {
-			return fmt.Errorf("given key was not a private key")
 		}
 
 		pubk, err := key.Neuter()
@@ -87,6 +79,24 @@ var getMasterPubCmd = cli.Command{
 		fmt.Print(pubk.String())
 		return nil
 	},
+}
+
+func loadPrivKey(fi string) (*keychain.ExtendedKey, error) {
+	data, err := ioutil.ReadFile(fi)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := keychain.NewKeyFromString(string(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if !key.IsPrivate() {
+		return nil, fmt.Errorf("given key was not a private key")
+	}
+
+	return key, nil
 }
 
 var getChildPrivKeyCmd = cli.Command{
