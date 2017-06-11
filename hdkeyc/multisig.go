@@ -9,7 +9,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
 	keychain "github.com/btcsuite/btcutil/hdkeychain"
 	cli "github.com/urfave/cli"
 	addrs "github.com/whyrusleeping/hdkeyutils/addrs"
@@ -177,15 +176,7 @@ var msigMkSpendTxCmd = cli.Command{
 			return err
 		}
 
-		addr, err := btcutil.DecodeAddress(target, nil)
-		if err != nil {
-			return err
-		}
-
-		pkscript, err := txscript.PayToAddrScript(addr)
-		if err != nil {
-			return err
-		}
+		pkscript := mktx.PayToPubkeyScript(target)
 
 		outp := wire.NewOutPoint(prevtx, uint32(c.Int("prevoutindex")))
 		txin := wire.NewTxIn(outp, redeem)
