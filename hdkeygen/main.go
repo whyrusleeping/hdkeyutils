@@ -73,7 +73,6 @@ func main() {
 		if err != nil {
 			fatal("Error while reading randomness: %s\n", err)
 		}
-		r.Read(otherRand)
 
 		// Hash first the otherRand data then the users input
 		h := sha512.New()
