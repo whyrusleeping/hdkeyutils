@@ -71,6 +71,10 @@ func cmdMsigScript(c *cli.Context) ([]byte, error) {
 		return nil, fmt.Errorf("must specify a value for n")
 	}
 
+	if n != len(c.Args()) {
+		return nil, fmt.Errorf("must pass 'n' pubkeys")
+	}
+
 	var keys [][]byte
 	for _, keystr := range c.Args() {
 		k, err := keychain.NewKeyFromString(keystr)
@@ -157,6 +161,10 @@ var msigMkSpendTxCmd = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
+		if len(c.Args()) < 4 {
+			return fmt.Errorf("must pass four arguments")
+		}
+
 		redeemscr := c.Args()[0]
 		txhash := c.Args()[1]
 		target := c.Args()[2]
@@ -205,6 +213,9 @@ var msigSignTxCmd = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
+		if len(c.Args()) < 2 {
+			return fmt.Errorf("must pass private key file and txdata to sign")
+		}
 		keyfi := c.Args()[0]
 		txdata := c.Args()[1]
 
@@ -245,9 +256,13 @@ var msigSignTxCmd = cli.Command{
 }
 
 var msigFinishTxSigCmd = cli.Command{
-	Name:  "finish",
-	Usage: "complete a multisig spend tx with signatures",
+	Name:      "finish",
+	Usage:     "complete a multisig spend tx with signatures",
+	ArgsUsage: "<txdata> <sig1> <sig2> ...",
 	Action: func(c *cli.Context) error {
+		if len(c.Args()) < 2 {
+			return fmt.Errorf("must specify txdata and signatures")
+		}
 		txdata := c.Args()[0]
 
 		var sigs [][]byte
