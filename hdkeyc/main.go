@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -87,6 +88,8 @@ func loadPrivKey(fi string) (*keychain.ExtendedKey, error) {
 		return nil, err
 	}
 
+	data = bytes.TrimSpace(data)
+
 	key, err := keychain.NewKeyFromString(string(data))
 	if err != nil {
 		return nil, err
@@ -137,23 +140,20 @@ var getChildPrivKeyCmd = cli.Command{
 			i += keychain.HardenedKeyStart
 		}
 
-		data, err := ioutil.ReadFile(c.Args().First())
+		key, err := loadPrivKey(c.Args().First())
 		if err != nil {
 			return err
-		}
-
-		key, err := keychain.NewKeyFromString(string(data))
-		if err != nil {
-			return err
-		}
-
-		if !key.IsPrivate() {
-			return fmt.Errorf("given key was not a private key")
 		}
 
 		childpriv, err := key.Child(uint32(i))
 		if err != nil {
 			return err
+		}
+
+		if c.Bool("harden") {
+			// just print out the hdkey
+			fmt.Println(childpriv.String())
+			return nil
 		}
 
 		privk, err := childpriv.ECPrivKey()
@@ -201,9 +201,6 @@ var getChildPubKeyCmd = cli.Command{
 			Name:  "testnet",
 			Usage: "print testnet addrs",
 		},
-		cli.BoolFlag{
-			Name: "harden",
-		},
 	},
 	Action: func(c *cli.Context) error {
 		enc := c.String("format")
@@ -217,16 +214,12 @@ var getChildPubKeyCmd = cli.Command{
 			return err
 		}
 
-		if c.Bool("harden") {
-			i += keychain.HardenedKeyStart
-		}
-
 		data, err := ioutil.ReadFile(c.Args().First())
 		if err != nil {
 			return err
 		}
 
-		key, err := keychain.NewKeyFromString(string(data))
+		key, err := keychain.NewKeyFromString(string(bytes.TrimSpace(data)))
 		if err != nil {
 			return err
 		}
