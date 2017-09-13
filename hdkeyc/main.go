@@ -117,6 +117,9 @@ var getChildPrivKeyCmd = cli.Command{
 		cli.BoolFlag{
 			Name: "testnet",
 		},
+		cli.BoolFlag{
+			Name: "harden",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		format := c.String("format")
@@ -128,6 +131,10 @@ var getChildPrivKeyCmd = cli.Command{
 		i, err := strconv.Atoi(c.Args()[1])
 		if err != nil {
 			return err
+		}
+
+		if c.Bool("harden") {
+			i += keychain.HardenedKeyStart
 		}
 
 		data, err := ioutil.ReadFile(c.Args().First())
@@ -194,6 +201,9 @@ var getChildPubKeyCmd = cli.Command{
 			Name:  "testnet",
 			Usage: "print testnet addrs",
 		},
+		cli.BoolFlag{
+			Name: "harden",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		enc := c.String("format")
@@ -205,6 +215,10 @@ var getChildPubKeyCmd = cli.Command{
 		i, err := strconv.Atoi(c.Args()[1])
 		if err != nil {
 			return err
+		}
+
+		if c.Bool("harden") {
+			i += keychain.HardenedKeyStart
 		}
 
 		data, err := ioutil.ReadFile(c.Args().First())
