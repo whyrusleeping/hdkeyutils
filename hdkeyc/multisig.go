@@ -187,7 +187,7 @@ var msigMkSpendTxCmd = cli.Command{
 		pkscript := mktx.PayToPubkeyScript(target)
 
 		outp := wire.NewOutPoint(prevtx, uint32(c.Int("prevoutindex")))
-		txin := wire.NewTxIn(outp, redeem)
+		txin := wire.NewTxIn(outp, redeem, nil)
 		tx := wire.NewMsgTx(1)
 		tx.AddTxIn(txin)
 
